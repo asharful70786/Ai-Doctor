@@ -1,15 +1,20 @@
 import nodemailer from "nodemailer";
 import OTP from "../model/otpModel.js";
 
+
+console.log( process.env.GMAIL_PASSWORD , "process.env.GMAIL_PASSWORD")
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false, // true for 465, false for 587
+ 
   auth: {
     user: "ashrafulmomin2@gmail.com",
-    pass: "tpca xhhn fvky vwmf", // Use App Passwords
+    pass: process.env.GMAIL_PASSWORD, // Use App Passwords
   },
 });
+
+"tpca xhhn fvky vwmf"
 
 export async function sendOtp(email) {
   const otp = Math.floor(1000 + Math.random() * 9999);

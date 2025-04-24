@@ -1,14 +1,16 @@
+import dotenv from 'dotenv';
+dotenv.config(); 
 import express from 'express';
+
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
-import connectDB from './config/db.js'; // Import the database connection
+import connectDB from './config/db.js';
 import { sendOtp } from './services/otpService.js';
 import Prompt from './model/Prompt.js'; // ES6-style import
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import OTP from './model/otpModel.js';
 
-dotenv.config();
+
 connectDB(); // Connect to MongoDB
 const app = express();
 
