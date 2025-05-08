@@ -20,7 +20,7 @@ app.use(cors({
 }));
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieParser(process.env.salt));
 app.use(express.json());
 
 
@@ -78,9 +78,11 @@ app.post('/register', async (req, res) => {
     let p1 = await User.findOne({ email });
     console.log(p1)
     if (!user) return res.status(400).json({ error: "failed to create user" });
-    res.cookie("token", email, {
+    res.cookie("token", user.id, {
       httpOnly: true,
+      secure: true,
       sameSite: "strict",
+      signed: true
     });
 
     res.json({ user });
@@ -105,7 +107,7 @@ app.post('/verify-otp', async (req, res) => {
   const { email, otp, password, type } = req.body;
 
   if (!email || !otp || !type) return res.status(400).json({ error: "Missing fields." });
-
+  const user = await User.findOne({ email });
   try {
     const otpRecord = await OTP.findOne({ email, otp });
     if (!otpRecord) return res.status(400).json({ error: "Invalid OTP." });
@@ -116,17 +118,19 @@ app.post('/verify-otp', async (req, res) => {
 
       await User.create({ email, password }); // use create instead of insertOne
     } else if (type === "login") {
-      const user = await User.findOne({ email });
+
       if (!user || user.password !== password) {
         return res.status(401).json({ error: "Invalid credentials." });
       }
     }
 
-    res.cookie("token", email, {
+    res.cookie("token", user.id, {
       httpOnly: true,
+      secure: true,
       sameSite: "strict",
-      secure: false,
+      signed: true
     });
+
 
     return res.json({ success: true });
 
@@ -140,16 +144,15 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "Email and password required." });
 
+   const user = await User.findOne({ email, password, });
   try {
-    const user = await User.findOne({ email, password, });
-
-
-    // ✅ Set cookie
-    res.cookie("token", email, {
+    res.cookie("token", user.id, {
       httpOnly: true,
-      sameSite: "none",
       secure: true,
+      sameSite: "strict",
+      signed: true
     });
+
 
     res.json({ success: true });
   } catch (err) {
@@ -167,7 +170,7 @@ app.get('/logout', (req, res) => {
 });
 
 
-// ✅ User requests OTP to login (without password)
+
 app.post('/otp-login', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Email required." });
@@ -196,12 +199,13 @@ app.post('/verify-otp-login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found." });
 
-    // ✅ Login: set cookie
-    res.cookie("token", email, {
+    res.cookie("token", user.id, {
       httpOnly: true,
-      sameSite: "none",
       secure: true,
+      sameSite: "strict",
+      signed: true
     });
+
 
     await OTP.deleteOne({ email, otp }); // Invalidate OTP
     res.json({ success: true, message: "Login successful" });
@@ -211,7 +215,7 @@ app.post('/verify-otp-login', async (req, res) => {
   }
 });
 app.get("/auth-check", (req, res) => {
-  const token = req.cookies.token;
+  const token = req.signedCookies.token;
   if (!token) {
     return res.status(401).json({ auth: false });
   }
