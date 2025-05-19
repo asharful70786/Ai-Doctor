@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import OTP from "../model/otpModel.js";
+import OTP from "../models/otpModel.js";
 
 
 
@@ -17,7 +17,6 @@ const transporter = nodemailer.createTransport({
 
 
 export async function sendOtp(email) {
-  console.log(email, "send otp email");
   const otp = Math.floor(1000 + Math.random() * 9000);
 
 
